@@ -38,7 +38,7 @@ app.get("/protected", authMiddleware, (req, res) => {
   res.json({ message: "Protect Route accessed", user: (req as any).user });
 });
 
-app.get("/heath-check", (req, res) => {
+app.get("/health-check", (req, res) => {
   return res.status(200).json({ message: "Health Checking" });
 });
 

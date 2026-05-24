@@ -13,6 +13,13 @@ type Document = {
   userId: string;
 };
 
+type CustomJwtPayload = {
+  name: string;
+  email: string;
+  userId: string;
+};
+
+
 const NAV_ITEMS = [
   { label: "Dashboard", active: true },
   { label: "My Documents", active: false },
@@ -20,27 +27,43 @@ const NAV_ITEMS = [
 ];
 
 export default function Dashboard() {
-  const token = localStorage.getItem("token");
-  const decoded = jwtDecode(token!);
 
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [decoded, setDecoded] = useState<CustomJwtPayload | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [token, setToken] = useState<string | null>(null);
 
   const pathname = usePathname();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) router.push("/sign-in");
-    else setChecking(false);
+    const storedToken = localStorage.getItem("token");
+
+    if (!storedToken) {
+      router.push("/sign-in");
+      return;
+    }
+
+    try {
+      const user = jwtDecode<CustomJwtPayload>(storedToken);
+
+      setToken(storedToken);
+      setDecoded(user);
+      setChecking(false);
+    } catch (error) {
+      console.log("Invalid token");
+
+      localStorage.removeItem("token");
+      router.push("/sign-in");
+    }
   }, [router]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     async function getData() {
-      const res = await fetch("http://localhost:5000/api/documents", {
+      const res = await fetch("https://realtime-workspace-1.onrender.com/api/documents", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -70,10 +93,10 @@ export default function Dashboard() {
     return "Good evening";
   };
 
-  const handleDelete = async (docId) => {
+  const handleDelete = async (docId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/documents/${docId}`,
+        `https://realtime-workspace-1.onrender.com/api/documents/${docId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -94,7 +117,7 @@ export default function Dashboard() {
   const handleEditModal = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/documents/update/${editingId}`,
+        `https://realtime-workspace-1.onrender.com/api/documents/update/${editingId}`,
         {
           method: "PATCH",
           headers: {
@@ -138,11 +161,10 @@ export default function Dashboard() {
           {NAV_ITEMS.map((item) => (
             <div
               key={item.label}
-              className={`mx-2 px-3 py-2 rounded-lg text-[13px] cursor-pointer transition ${
-                item.active
-                  ? "bg-purple-500/15 text-purple-300"
-                  : "text-white/40 hover:bg-white/5 hover:text-white/80"
-              }`}>
+              className={`mx-2 px-3 py-2 rounded-lg text-[13px] cursor-pointer transition ${item.active
+                ? "bg-purple-500/15 text-purple-300"
+                : "text-white/40 hover:bg-white/5 hover:text-white/80"
+                }`}>
               {item.label}
             </div>
           ))}
@@ -166,11 +188,11 @@ export default function Dashboard() {
         <div className="p-3 border-t border-white/10">
           <div className="flex items-center gap-2 p-2">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-semibold text-white">
-              {decoded.name.charAt(0).toUpperCase()}
+              {decoded?.name?.charAt(0)?.toUpperCase()}
             </div>
             <div>
-              <p className="text-xs text-white/80">{decoded.name}</p>
-              <p className="text-[10px] text-white/40">{decoded.email}</p>
+              <p className="text-xs text-white/80">{decoded?.name}</p>
+              <p className="text-[10px] text-white/40">{decoded?.email}</p>
             </div>
           </div>
         </div>
@@ -196,7 +218,7 @@ export default function Dashboard() {
         <div className="p-6">
           {/* Greeting */}
           <h2 className="text-lg font-semibold text-white">
-            {getGreeting()}, {decoded.name}
+            {getGreeting()}, {decoded?.name}
           </h2>
           <p className="text-sm text-white/40 mb-6">
             Manage your documents and collaborate in real-time

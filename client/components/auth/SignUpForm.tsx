@@ -11,7 +11,7 @@ export default function SignUpForm() {
   const router = useRouter();
 
   const api = axios.create({
-    baseURL: "http://localhost:5000/api",
+    baseURL: "https://realtime-workspace-1.onrender.com/api",
   });
 
   const {
