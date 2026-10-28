@@ -24,6 +24,7 @@ The project demonstrates full-stack development, real-time communication, API in
 
 ### Frontend
 - React.js
+- Nextjs
 - JavaScript
 - HTML5 and CSS3
 
